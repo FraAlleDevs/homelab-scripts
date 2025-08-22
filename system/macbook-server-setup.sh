@@ -325,34 +325,6 @@ done_msg
 # ========================================
 progress "Setting up auto-recovery for remote access"
 
-# Install ethtool for Wake-on-LAN
-sudo apt install -y ethtool wakeonlan > /dev/null 2>&1
-
-# Enable Wake-on-LAN
-ETH_INTERFACE=$(ip -o link show | awk -F': ' '{print $2}' | grep -E '^en' | head -1)
-if [ -n "$ETH_INTERFACE" ]; then
-    # Enable WoL (ignore errors if not supported)
-    sudo ethtool -s $ETH_INTERFACE wol g 2>/dev/null || true
-    
-    # Make WoL persistent across reboots
-    cat << EOF | sudo tee /etc/systemd/system/wol-enable.service > /dev/null
-[Unit]
-Description=Configure Wake On LAN
-Requires=network.target
-After=network.target
-
-[Service]
-Type=oneshot
-ExecStart=/sbin/ethtool -s $ETH_INTERFACE wol g
-RemainAfterExit=true
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    
-    sudo systemctl enable wol-enable > /dev/null 2>&1
-fi
-
 # Create auto-reboot service for unexpected shutdowns
 cat << 'EOF' | sudo tee /etc/systemd/system/auto-recovery.service > /dev/null
 [Unit]
@@ -384,21 +356,6 @@ EOF
 chmod +x "$SCRIPT_DIR/manual-shutdown.sh"
 # Script available at: homelab-scripts/system/manual-shutdown.sh
 
-# Create Wake-on-LAN info script
-MAC_ADDRESS=$(cat /sys/class/net/$ETH_INTERFACE/address 2>/dev/null)
-cat << EOF > "$SCRIPT_DIR/wake-macbook.sh"
-#!/bin/bash
-# Wake up the MacBook remotely using Wake-on-LAN
-# Usage: bash wake-macbook.sh
-# Or from another machine: wakeonlan $MAC_ADDRESS
-
-echo "Sending Wake-on-LAN packet to MAC: $MAC_ADDRESS"
-wakeonlan $MAC_ADDRESS
-echo "Wake packet sent. Wait 30-60 seconds for boot."
-EOF
-chmod +x "$SCRIPT_DIR/wake-macbook.sh"
-# Script available at: homelab-scripts/system/wake-macbook.sh
-
 done_msg
 
 # ========================================
@@ -419,7 +376,6 @@ echo "   2. Use 'sudo docker' until you logout/login"
 echo "   3. SSH currently on both ports 22 and 2222"
 echo ""
 echo "🔄 Auto-Recovery Features:"
-echo "   • Wake-on-LAN: Use ~/homelab-scripts/system/wake-macbook.sh from another machine"
 echo "   • Auto-reboot: Unexpected shutdowns trigger automatic restart"
 echo "   • Manual shutdown: Use ~/homelab-scripts/system/manual-shutdown.sh to prevent auto-reboot"
 echo ""
