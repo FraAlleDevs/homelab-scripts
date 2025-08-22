@@ -6,9 +6,20 @@ A collection of automation scripts for setting up and managing homelab infrastru
 
 ```
 homelab-scripts/
-├── system/           # System preparation and hardening scripts
+├── system/           # System preparation, hardening, and utility scripts
+│   ├── macbook-server-setup.sh    # Main server preparation script
+│   ├── add-user.sh                # User management with homelab permissions
+│   ├── brightness-control.sh      # Remote screen brightness control
+│   ├── screen-on.sh               # Quick screen activation
+│   ├── screen-off.sh              # Quick screen deactivation
+│   ├── check-upgrade.sh           # Check Ubuntu upgrade status
+│   ├── monitor-upgrade.sh         # Monitor upgrade process
+│   ├── manual-shutdown.sh         # Safe shutdown without auto-reboot
+│   └── system-info.sh             # Display system connection info
 ├── applications/     # Application-specific installation scripts
+│   └── freqtrade-install.sh       # Freqtrade trading bot setup
 ├── launchers/        # Orchestration scripts that combine multiple components
+│   └── macbook-freqtrade-server-init.sh
 └── docs/            # Documentation and guides
 ```
 
@@ -31,6 +42,113 @@ Prepares a MacBook Pro 2011 running Ubuntu Server for homelab use.
 **Usage:**
 ```bash
 bash system/macbook-server-setup.sh
+```
+
+### `system/add-user.sh`
+Creates new users with all necessary permissions for homelab management.
+
+**Features:**
+- Creates user with home directory and bash shell
+- Generates secure random password
+- Adds to sudo and docker groups
+- Sets up SSH directory with proper permissions
+- Creates Freqtrade workspace directory
+- Configures bash environment with useful aliases
+- Saves credentials securely to /root/
+
+**Usage:**
+```bash
+sudo bash system/add-user.sh <username>
+```
+
+**Created for new user:**
+- Home directory with SSH setup
+- Docker and sudo access (logout/login required for docker)
+- Freqtrade directory: `~/freqtrade/`
+- Welcome script: `~/welcome.sh`
+- Useful aliases: `ft-status`, `ft-logs`, `dps`, `dlog`
+
+### `system/brightness-control.sh`
+Remote screen brightness control for MacBook servers with display management.
+
+**Features:**
+- Turn screen on/off remotely via SSH
+- Set specific brightness percentage (0-100%)
+- Set absolute brightness levels
+- Auto turn-off with timeout
+- Status monitoring and logging
+- Multiple backlight interface support
+
+**Usage:**
+```bash
+# Turn on at 75% brightness
+bash system/brightness-control.sh on
+
+# Turn on at 50% for 10 minutes
+bash system/brightness-control.sh on 50 10
+
+# Turn off
+bash system/brightness-control.sh off
+
+# Set specific level
+bash system/brightness-control.sh level 500
+
+# Check status
+bash system/brightness-control.sh status
+```
+
+**Remote usage:**
+```bash
+ssh -p 2222 user@server 'bash ~/brightness-control.sh on'
+```
+
+### `system/screen-on.sh` / `system/screen-off.sh`
+Quick shortcuts for screen control.
+
+**Usage:**
+```bash
+bash system/screen-on.sh [brightness%] [timeout_minutes]
+bash system/screen-off.sh
+```
+
+### `system/check-upgrade.sh` / `system/monitor-upgrade.sh`
+Ubuntu upgrade monitoring utilities.
+
+**Features:**
+- `monitor-upgrade.sh`: Runs upgrade monitoring in background
+- `check-upgrade.sh`: Quick status check of upgrade completion
+- Creates completion markers and status logs
+- Multiple notification methods (wall, logger, terminal bell)
+
+**Usage:**
+```bash
+# Start monitoring an upgrade
+bash system/monitor-upgrade.sh
+
+# Check if upgrade is complete
+bash system/check-upgrade.sh
+```
+
+### `system/manual-shutdown.sh`
+Safe shutdown script that prevents automatic reboot.
+
+**Usage:**
+```bash
+bash system/manual-shutdown.sh
+```
+
+### `system/system-info.sh`
+Quick display of system connection information.
+
+**Shows:**
+- Current IP address
+- SSH ports (22 and 2222)
+- Freqtrade UI URL
+- System uptime
+
+**Usage:**
+```bash
+bash system/system-info.sh
 ```
 
 ## 🤖 Application Scripts
@@ -87,6 +205,22 @@ This launcher will:
    
    # Application installation (can be repeated)
    bash applications/freqtrade-install.sh
+   ```
+
+4. **Additional utilities available:**
+   ```bash
+   # User management
+   sudo bash system/add-user.sh newuser
+   
+   # Remote screen control
+   bash system/brightness-control.sh on 75
+   bash system/screen-off.sh
+   
+   # System information
+   bash system/system-info.sh
+   
+   # Safe shutdown (prevents auto-reboot)
+   bash system/manual-shutdown.sh
    ```
 
 ## ⚠️ Important Notes
