@@ -1,3 +1,3 @@
 #!/bin/bash
 # Quick shortcut to turn screen on
-~/brightness-control.sh on "$@"
+"$(dirname "$0")/brightness-control.sh" on "$@"

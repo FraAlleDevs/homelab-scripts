@@ -149,6 +149,9 @@ done_msg
 # ========================================
 progress "Setting display brightness to 0 (headless server)"
 
+# Add user to video group for brightness control permissions
+sudo usermod -aG video $USER
+
 # Turn off display brightness immediately
 for backlight in /sys/class/backlight/*/brightness; do
     if [ -w "$backlight" ]; then

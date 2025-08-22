@@ -1,3 +1,3 @@
 #!/bin/bash
 # Quick shortcut to turn screen off
-~/brightness-control.sh off
+"$(dirname "$0")/brightness-control.sh" off
