@@ -143,7 +143,7 @@ done_msg
 progress "Creating helper scripts"
 
 # Service startup script
-cat << 'EOF' > ~/freqtrade/ft-start.sh
+cat << 'EOF' > ~/freqtrade/freqtrade-fork/ft-start.sh
 #!/bin/bash
 # Start Freqtrade services
 echo "Starting Freqtrade services..."
@@ -152,10 +152,10 @@ docker compose up -d
 echo "Services started. Access FreqUI at http://localhost:8080"
 echo "Check status with: ./ft-status.sh"
 EOF
-chmod +x ~/freqtrade/ft-start.sh
+chmod +x ~/freqtrade/freqtrade-fork/ft-start.sh
 
 # Service stop script
-cat << 'EOF' > ~/freqtrade/ft-stop.sh
+cat << 'EOF' > ~/freqtrade/freqtrade-fork/ft-stop.sh
 #!/bin/bash
 # Stop Freqtrade services
 echo "Stopping Freqtrade services..."
@@ -163,10 +163,10 @@ cd ~/freqtrade
 docker compose down
 echo "Services stopped."
 EOF
-chmod +x ~/freqtrade/ft-stop.sh
+chmod +x ~/freqtrade/freqtrade-fork/ft-stop.sh
 
 # Status check script
-cat << 'EOF' > ~/freqtrade/ft-status.sh
+cat << 'EOF' > ~/freqtrade/freqtrade-fork/ft-status.sh
 #!/bin/bash
 echo "=== Docker Containers ==="
 docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "(NAMES|freqtrade)"
@@ -178,37 +178,85 @@ else
     echo "Freqtrade container is not running. Use ./ft-start.sh to start services."
 fi
 EOF
-chmod +x ~/freqtrade/ft-status.sh
+chmod +x ~/freqtrade/freqtrade-fork/ft-status.sh
 
 # Logs script
-cat << 'EOF' > ~/freqtrade/ft-logs.sh
+cat << 'EOF' > ~/freqtrade/freqtrade-fork/ft-logs.sh
 #!/bin/bash
-if docker ps --format "{{.Names}}" | grep -q "^freqtrade$"; then
-    docker logs freqtrade --tail 100 -f
+
+# Get all running freqtrade containers
+containers=($(docker ps --format "{{.Names}}" | grep "^freqtrade"))
+
+if [ ${#containers[@]} -eq 0 ]; then
+    echo "No Freqtrade containers are running. Use ./ft-start.sh to start services."
+    exit 1
+elif [ ${#containers[@]} -eq 1 ]; then
+    # Single container - show logs directly
+    echo "Showing logs for ${containers[0]}..."
+    docker logs "${containers[0]}" --tail 100 -f
 else
-    echo "Freqtrade container is not running. Use ./ft-start.sh to start services."
+    # Multiple containers - show menu
+    echo "Multiple Freqtrade containers found:"
+    echo "0) Show logs from ALL containers (interleaved)"
+    for i in "${!containers[@]}"; do
+        echo "$((i+1))) ${containers[i]}"
+    done
+    
+    read -p "Select option [0-${#containers[@]}]: " choice
+    
+    case $choice in
+        0)
+            echo "Showing logs from all containers (press Ctrl+C to stop)..."
+            # Show logs from all containers with container name prefix
+            for container in "${containers[@]}"; do
+                docker logs "$container" --tail 50 -f --timestamps 2>&1 | sed "s/^/[$container] /" &
+            done
+            wait
+            ;;
+        [1-9]*)
+            if [ "$choice" -gt 0 ] && [ "$choice" -le "${#containers[@]}" ]; then
+                selected_container="${containers[$((choice-1))]}"
+                echo "Showing logs for $selected_container..."
+                docker logs "$selected_container" --tail 100 -f
+            else
+                echo "Invalid selection."
+                exit 1
+            fi
+            ;;
+        *)
+            echo "Invalid selection."
+            exit 1
+            ;;
+    esac
 fi
 EOF
-chmod +x ~/freqtrade/ft-logs.sh
+chmod +x ~/freqtrade/freqtrade-fork/ft-logs.sh
 
 # Data download script
-cat << 'EOF' > ~/freqtrade/ft-download-data.sh
+cat << 'EOF' > ~/freqtrade/freqtrade-fork/ft-download-data.sh
 #!/bin/bash
 cd ~/freqtrade
 docker compose run --rm freqtrade download-data --config /freqtrade/user_data/config.json --days 30 --timeframes 1h 5m
 EOF
-chmod +x ~/freqtrade/ft-download-data.sh
+chmod +x ~/freqtrade/freqtrade-fork/ft-download-data.sh
 
 # Backtesting script
-cat << 'EOF' > ~/freqtrade/ft-backtest.sh
+cat << 'EOF' > ~/freqtrade/freqtrade-fork/ft-backtest.sh
 #!/bin/bash
 cd ~/freqtrade
-docker compose run --rm freqtrade backtesting --config /freqtrade/user_data/config.json --strategy SampleStrategy
+
+if [ -z "$1" ]; then
+    echo "Usage: $0 <strategy_name>"
+    echo "Example: $0 BtcEurActiveStrategy"
+    exit 1
+fi
+
+docker compose run --rm freqtrade backtesting --config /freqtrade/user_data/config.json --strategy "$1"
 EOF
-chmod +x ~/freqtrade/ft-backtest.sh
+chmod +x ~/freqtrade/freqtrade-fork/ft-backtest.sh
 
 # Shell access script
-cat << 'EOF' > ~/freqtrade/ft-bash.sh
+cat << 'EOF' > ~/freqtrade/freqtrade-fork/ft-bash.sh
 #!/bin/bash
 if docker ps --format "{{.Names}}" | grep -q "^freqtrade$"; then
     docker exec -it freqtrade bash
@@ -216,7 +264,7 @@ else
     echo "Freqtrade container is not running. Use ./ft-start.sh to start services."
 fi
 EOF
-chmod +x ~/freqtrade/ft-bash.sh
+chmod +x ~/freqtrade/freqtrade-fork/ft-bash.sh
 
 done_msg
 
@@ -239,19 +287,19 @@ echo "   Config: ~/freqtrade/user_data/config.json"
 echo "   Directory: ~/freqtrade"
 echo ""
 echo "🔧 Management Scripts:"
-echo "   ~/freqtrade/ft-start.sh     - Start Freqtrade services"
-echo "   ~/freqtrade/ft-stop.sh      - Stop Freqtrade services"
-echo "   ~/freqtrade/ft-status.sh    - Check status and logs"
-echo "   ~/freqtrade/ft-logs.sh      - Follow live logs"
-echo "   ~/freqtrade/ft-download-data.sh - Download market data"
-echo "   ~/freqtrade/ft-backtest.sh  - Run backtesting"
-echo "   ~/freqtrade/ft-bash.sh      - Access container shell"
+echo "   ~/freqtrade/freqtrade-fork/ft-start.sh     - Start Freqtrade services"
+echo "   ~/freqtrade/freqtrade-fork/ft-stop.sh      - Stop Freqtrade services"
+echo "   ~/freqtrade/freqtrade-fork/ft-status.sh    - Check status and logs"
+echo "   ~/freqtrade/freqtrade-fork/ft-logs.sh      - Follow live logs"
+echo "   ~/freqtrade/freqtrade-fork/ft-download-data.sh - Download market data"
+echo "   ~/freqtrade/freqtrade-fork/ft-backtest.sh  - Run backtesting"
+echo "   ~/freqtrade/freqtrade-fork/ft-bash.sh      - Access container shell"
 echo ""
 echo "⚠️  Next Steps:"
-echo "   1. Start services: ~/freqtrade/ft-start.sh"
+echo "   1. Start services: ~/freqtrade/freqtrade-fork/ft-start.sh"
 echo "   2. Add exchange API keys to ~/freqtrade/user_data/config.json"
-echo "   3. Download data: ~/freqtrade/ft-download-data.sh"
-echo "   4. Restart after config changes: ~/freqtrade/ft-stop.sh && ~/freqtrade/ft-start.sh"
+echo "   3. Download data: ~/freqtrade/freqtrade-fork/ft-download-data.sh"
+echo "   4. Restart after config changes: ~/freqtrade/freqtrade-fork/ft-stop.sh && ~/freqtrade/freqtrade-fork/ft-start.sh"
 echo ""
 echo "ℹ️  Note: Services are NOT automatically started. Use ft-start.sh when ready."
 echo "================================================"

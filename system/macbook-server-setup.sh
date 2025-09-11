@@ -124,7 +124,17 @@ fi
 done_msg
 
 # ========================================
-# 4. Lid Close Configuration
+# 4. Timezone Configuration
+# ========================================
+progress "Setting timezone to Europe/Berlin (CEST/CET)"
+sudo timedatectl set-timezone Europe/Berlin
+CURRENT_TZ=$(timedatectl show --value --property=Timezone)
+done_msg
+log "Timezone set to: $CURRENT_TZ"
+info "Local time: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+
+# ========================================
+# 5. Lid Close Configuration
 # ========================================
 progress "Configuring lid close behavior"
 sudo mkdir -p /etc/systemd/logind.conf.d
@@ -138,14 +148,14 @@ done_msg
 warn "Lid close changes will apply after reboot (SSH-safe)"
 
 # ========================================
-# 5. Disable Sleep/Suspend
+# 6. Disable Sleep/Suspend
 # ========================================
 progress "Disabling sleep and suspend"
 run_quiet sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 done_msg
 
 # ========================================
-# 6. Display Brightness Control
+# 7. Display Brightness Control
 # ========================================
 progress "Setting display brightness to 0 (headless server)"
 
@@ -183,7 +193,7 @@ sudo systemctl disable systemd-backlight@intel_backlight 2>/dev/null || true
 done_msg
 
 # ========================================
-# 7. Install Essential Packages
+# 8. Install Essential Packages
 # ========================================
 progress "Installing essential packages (2-3 minutes)"
 run_quiet sudo apt install -y \
@@ -193,7 +203,7 @@ run_quiet sudo apt install -y \
 done_msg
 
 # ========================================
-# 8. SSH Hardening
+# 9. SSH Hardening
 # ========================================
 progress "Configuring SSH security"
 
@@ -227,7 +237,7 @@ done_msg
 info "SSH moved to port 2222"
 
 # ========================================
-# 9. Firewall Configuration
+# 10. Firewall Configuration
 # ========================================
 progress "Configuring firewall"
 sudo ufw default deny incoming > /dev/null 2>&1
@@ -239,7 +249,7 @@ echo "y" | sudo ufw enable > /dev/null 2>&1
 done_msg
 
 # ========================================
-# 10. Fail2Ban Configuration
+# 11. Fail2Ban Configuration
 # ========================================
 progress "Configuring Fail2Ban"
 cat << EOF | sudo tee /etc/fail2ban/jail.local > /dev/null
@@ -253,7 +263,7 @@ sudo systemctl restart fail2ban
 done_msg
 
 # ========================================
-# 11. Thermal Management
+# 12. Thermal Management
 # ========================================
 progress "Setting up thermal management"
 sudo apt install -y fancontrol thermald > /dev/null 2>&1
@@ -261,7 +271,7 @@ sudo sensors-detect --auto > /dev/null 2>&1
 done_msg
 
 # ========================================
-# 12. Power Management
+# 13. Power Management
 # ========================================
 progress "Installing power management"
 sudo apt install -y tlp tlp-rdw > /dev/null 2>&1
@@ -276,7 +286,7 @@ sudo tlp start > /dev/null 2>&1
 done_msg
 
 # ========================================
-# 13. Swap Configuration
+# 14. Swap Configuration
 # ========================================
 progress "Configuring 4GB swap"
 if [ ! -f /swapfile ]; then
@@ -289,7 +299,7 @@ fi
 done_msg
 
 # ========================================
-# 14. Docker Installation
+# 15. Docker Installation
 # ========================================
 progress "Installing Docker (3-5 minutes)"
 sudo apt remove -y docker docker-engine docker.io containerd runc > /dev/null 2>&1 || true
@@ -321,7 +331,7 @@ chmod +x "$SCRIPT_DIR/system-info.sh"
 done_msg
 
 # ========================================
-# 15. Auto-Recovery Configuration
+# 16. Auto-Recovery Configuration
 # ========================================
 progress "Setting up auto-recovery for remote access"
 
