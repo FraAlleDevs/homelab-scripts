@@ -271,19 +271,94 @@ sudo sensors-detect --auto > /dev/null 2>&1
 done_msg
 
 # ========================================
-# 13. Power Management
+# 13. Power Management (2011 MacBook Fixes)
 # ========================================
-progress "Installing power management"
-sudo apt install -y tlp tlp-rdw > /dev/null 2>&1
-cat << EOF | sudo tee /etc/tlp.d/01-server.conf > /dev/null
-TLP_DEFAULT_MODE=BAT
-TLP_PERSISTENT_DEFAULT=1
-CPU_SCALING_GOVERNOR_ON_AC=powersave
-CPU_SCALING_GOVERNOR_ON_BAT=powersave
+progress "Configuring power management for 2011 MacBook server"
+
+# Disable TLP if it exists (causes aggressive disk sleep/wake cycles on MacBooks)
+if systemctl list-unit-files | grep -q tlp.service; then
+    sudo systemctl stop tlp 2>/dev/null || true
+    sudo systemctl disable tlp 2>/dev/null || true
+    info "TLP disabled (causes disk issues on MacBook servers)"
+fi
+
+# Disable USB autosuspend (prevents device disconnections)
+echo -1 | sudo tee /sys/module/usbcore/parameters/autosuspend > /dev/null
+echo "options usbcore autosuspend=-1" | sudo tee /etc/modprobe.d/usb-autosuspend.conf > /dev/null
+
+# Disable aggressive laptop-mode if present
+if [ -f /proc/sys/vm/laptop_mode ]; then
+    echo 0 | sudo tee /proc/sys/vm/laptop_mode > /dev/null
+fi
+
+# Disable SATA link power management (critical for 2011 MacBooks)
+for i in /sys/class/scsi_host/host*/link_power_management_policy; do
+    if [ -f "$i" ]; then
+        echo max_performance | sudo tee "$i" > /dev/null
+    fi
+done
+
+# Create systemd service to set SATA power policy on boot
+sudo tee /etc/systemd/system/sata-power-performance.service > /dev/null << 'EOF'
+[Unit]
+Description=Set SATA link power management to max_performance
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'for i in /sys/class/scsi_host/host*/link_power_management_policy; do [ -f "$i" ] && echo max_performance > $i; done'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
 EOF
-sudo systemctl enable tlp > /dev/null 2>&1
-sudo tlp start > /dev/null 2>&1
+
+sudo systemctl enable sata-power-performance.service > /dev/null 2>&1
+sudo systemctl start sata-power-performance.service > /dev/null 2>&1
+
+# Keep drives from spinning down
+if command -v hdparm &> /dev/null; then
+    for disk in /dev/sd?; do
+        if [ -b "$disk" ]; then
+            sudo hdparm -S 0 "$disk" 2>/dev/null || true  # Disable standby
+            sudo hdparm -B 255 "$disk" 2>/dev/null || true # Disable APM
+        fi
+    done
+fi
+
+# Create udev rule to prevent disk spindown
+echo 'ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", RUN+="/usr/sbin/hdparm -S 0 /dev/%k"' | \
+    sudo tee /etc/udev/rules.d/99-no-disk-spindown.rules > /dev/null
+
+# Create disk keepalive service (workaround for persistent MacBook EFI issues)
+sudo tee /etc/systemd/system/disk-keepalive.service > /dev/null << 'EOF'
+[Unit]
+Description=Keep disk from sleeping on 2011 MacBook
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c 'while true; do echo $(date) > /var/tmp/.keepalive; sync; sleep 15; done'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl enable disk-keepalive.service > /dev/null 2>&1
+sudo systemctl start disk-keepalive.service > /dev/null 2>&1
+
+# Add MacBook-specific kernel parameters for next boot
+if ! grep -q "libata.force=noncq" /etc/default/grub; then
+    sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 libata.force=noncq acpi_osi=Darwin"/' /etc/default/grub
+    sudo update-grub > /dev/null 2>&1
+    warn "Kernel parameters added for MacBook compatibility (requires reboot)"
+fi
+
 done_msg
+info "2011 MacBook power management fixes applied"
+warn "Disk keepalive service running (workaround for EFI firmware issues)"
 
 # ========================================
 # 14. Swap Configuration
