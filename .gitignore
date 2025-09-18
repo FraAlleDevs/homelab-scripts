@@ -1,2 +1,85 @@
 
+# Operating System Files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+.directory
+
+# Editor and IDE Files
+*~
+.*.swp
+.*.swo
+*.tmp
+\#*\#
+.#*
+.emacs.desktop
+.emacs.desktop.lock
+*.sublime-project
+*.sublime-workspace
+.idea/
+*.iml
+
+# VS Code User-Specific Settings (keep workspace settings)
+.vscode/launch.json
+.vscode/*.log
+.vscode/settings.json.user
+
+# Script Execution Artifacts
+*.log
+*.pid
+*.lock
+*.backup
+*.bak
+*.orig
+.cache/
+tmp/
+temp/
+.tmp/
+
+# Homelab/Docker Specific
+docker-compose.override.yml
+.env.local
+.env.*.local
+volumes/
+data/
+logs/
+
+# Security Sensitive Files
+*.key
+*.pem
+*.crt
+*.csr
+*.p12
+*.pfx
+secrets.txt
+passwords.txt
+credentials.txt
+api_keys.txt
+.secrets/
+config/local/
+
+# Testing and Development
+test_output/
+.pytest_cache/
+coverage/
+.coverage
+debug.log
+trace.log
+
+# Package/Distribution Files
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+dist/
+build/
+
+# Local Environment Files
+.local/
+local_config/
+override/
