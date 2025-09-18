@@ -1,0 +1,53 @@
+{
+  // Disable auto-save (use manual save with Cmd+S)
+  "files.autoSave": "off",
+  
+  // Enable auto-fix when manually saving
+  "editor.codeActionsOnSave": {
+    "source.fixAll.markdownlint": "explicit",
+    "source.fixAll": "explicit"
+  },
+  
+  // Format on manual save
+  "editor.formatOnSave": true,
+  
+  // Markdownlint specific settings
+  "markdownlint.config": {
+    // Allow raw HTML (for badges, etc.)
+    "MD033": false,
+    // Allow bare URLs in some contexts
+    "MD034": false,
+    // Allow duplicate headers (common in READMEs)
+    "MD024": false
+  },
+  
+  // File associations for markdown
+  "files.associations": {
+    "*.md": "markdown"
+  },
+  
+  // Trim trailing whitespace
+  "files.trimTrailingWhitespace": true,
+  
+  // Insert final newline
+  "files.insertFinalNewline": true,
+  
+  // Markdown specific editor settings
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.markdownlint": "explicit",
+      "source.fixAll": "explicit"
+    },
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    }
+  },
+  
+  // Run markdownlint checks as you type
+  "markdownlint.run": "onType"
+}

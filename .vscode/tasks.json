@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Fix All Markdown Files",
+      "type": "shell",
+      "command": "code",
+      "args": [
+        "--command",
+        "markdownlint.fixAll"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Format Current Markdown File",
+      "type": "shell",
+      "command": "code",
+      "args": [
+        "--command",
+        "editor.action.formatDocument"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
