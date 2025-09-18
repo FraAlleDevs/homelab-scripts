@@ -4,7 +4,7 @@ A collection of automation scripts for setting up and managing homelab infrastru
 
 ## 📁 Structure
 
-```
+```text
 homelab-scripts/
 ├── system/           # System preparation, hardening, and utility scripts
 │   ├── macbook-server-setup.sh    # Main server preparation script
@@ -15,7 +15,9 @@ homelab-scripts/
 │   ├── check-upgrade.sh           # Check Ubuntu upgrade status
 │   ├── monitor-upgrade.sh         # Monitor upgrade process
 │   ├── manual-shutdown.sh         # Safe shutdown without auto-reboot
-│   └── system-info.sh             # Display system connection info
+│   ├── system-info.sh             # Display system connection info
+│   ├── serverwatch                # Network server monitoring daemon
+│   └── test-connection.sh         # Connection status testing utility
 ├── applications/     # Application-specific installation scripts
 │   └── freqtrade-install.sh       # Freqtrade trading bot setup
 ├── launchers/        # Orchestration scripts that combine multiple components
@@ -26,9 +28,11 @@ homelab-scripts/
 ## 🖥️ System Scripts
 
 ### `system/macbook-server-setup.sh`
+
 Prepares a MacBook Pro 2011 running Ubuntu Server for homelab use.
 
 **Features:**
+
 - Network configuration (DHCP + DNS)
 - System updates and essential packages
 - SSH hardening (moves to port 2222)
@@ -40,14 +44,17 @@ Prepares a MacBook Pro 2011 running Ubuntu Server for homelab use.
 - 4GB swap setup
 
 **Usage:**
+
 ```bash
 bash system/macbook-server-setup.sh
 ```
 
 ### `system/add-user.sh`
+
 Creates new users with all necessary permissions for homelab management.
 
 **Features:**
+
 - Creates user with home directory and bash shell
 - Generates secure random password
 - Adds to sudo and docker groups
@@ -57,11 +64,13 @@ Creates new users with all necessary permissions for homelab management.
 - Saves credentials securely to /root/
 
 **Usage:**
+
 ```bash
 sudo bash system/add-user.sh <username>
 ```
 
 **Created for new user:**
+
 - Home directory with SSH setup
 - Docker and sudo access (logout/login required for docker)
 - Freqtrade directory: `~/freqtrade/`
@@ -69,9 +78,11 @@ sudo bash system/add-user.sh <username>
 - Useful aliases: `ft-status`, `ft-logs`, `dps`, `dlog`
 
 ### `system/brightness-control.sh`
+
 Remote screen brightness control for MacBook servers with display management.
 
 **Features:**
+
 - Turn screen on/off remotely via SSH
 - Set specific brightness percentage (0-100%)
 - Set absolute brightness levels
@@ -80,6 +91,7 @@ Remote screen brightness control for MacBook servers with display management.
 - Multiple backlight interface support
 
 **Usage:**
+
 ```bash
 # Turn on at 75% brightness
 bash system/brightness-control.sh on
@@ -98,29 +110,35 @@ bash system/brightness-control.sh status
 ```
 
 **Remote usage:**
+
 ```bash
 ssh -p 2222 user@server 'bash ~/brightness-control.sh on'
 ```
 
 ### `system/screen-on.sh` / `system/screen-off.sh`
+
 Quick shortcuts for screen control.
 
 **Usage:**
+
 ```bash
 bash system/screen-on.sh [brightness%] [timeout_minutes]
 bash system/screen-off.sh
 ```
 
 ### `system/check-upgrade.sh` / `system/monitor-upgrade.sh`
+
 Ubuntu upgrade monitoring utilities.
 
 **Features:**
+
 - `monitor-upgrade.sh`: Runs upgrade monitoring in background
 - `check-upgrade.sh`: Quick status check of upgrade completion
 - Creates completion markers and status logs
 - Multiple notification methods (wall, logger, terminal bell)
 
 **Usage:**
+
 ```bash
 # Start monitoring an upgrade
 bash system/monitor-upgrade.sh
@@ -130,33 +148,122 @@ bash system/check-upgrade.sh
 ```
 
 ### `system/manual-shutdown.sh`
+
 Safe shutdown script that prevents automatic reboot.
 
 **Usage:**
+
 ```bash
 bash system/manual-shutdown.sh
 ```
 
 ### `system/system-info.sh`
+
 Quick display of system connection information.
 
 **Shows:**
+
 - Current IP address
 - SSH ports (22 and 2222)
 - Freqtrade UI URL
 - System uptime
 
 **Usage:**
+
 ```bash
 bash system/system-info.sh
 ```
 
+### `system/serverwatch`
+
+Network server monitoring daemon with intelligent network detection and background operation.
+
+**Features:**
+
+- Continuous ping monitoring with configurable intervals
+- Smart network detection (home WiFi, VPN, away detection)
+- Reduces check frequency when away from home network
+- Background daemon operation with PID management
+- Real-time statistics and uptime tracking
+- macOS notifications for alerts
+- Comprehensive logging with multiple verbosity levels
+- Response time measurement
+- Status reporting and live log viewing
+
+**Usage:**
+
+```bash
+# Start monitoring in background
+./system/serverwatch start 192.168.1.100
+
+# Start with custom settings
+./system/serverwatch start 192.168.1.100 -i 10 -v
+
+# Run in foreground (visible mode)
+./system/serverwatch start 192.168.1.100 -f
+
+# Check daemon status
+./system/serverwatch status
+
+# View live logs
+./system/serverwatch log
+
+# Stop monitoring
+./system/serverwatch stop
+
+# View statistics report
+./system/serverwatch report
+```
+
+**Options:**
+
+- `-f, --foreground`: Run in visible mode instead of background
+- `-v, --verbose`: Enable detailed logging of every check
+- `-i INTERVAL`: Set ping interval in seconds (default: 30)
+- `-t TIMEOUT`: Set ping timeout in seconds (default: 5)
+- `-a ALERT`: Alert after N consecutive failures (default: 3)
+- `-d DIR`: Set custom log directory (default: ~/.serverwatch)
+
+**Smart Features:**
+
+- Detects when you're away from home network and reduces checks to hourly
+- Automatically resumes normal monitoring when reconnected to home WiFi or VPN
+- Sends macOS notifications for server down/recovery events
+- Tracks comprehensive statistics including uptime percentage
+- Logs stored in `~/.serverwatch/` with rotation and error separation
+
+### `system/test-connection.sh`
+
+Quick connection status checker for troubleshooting network connectivity.
+
+**Features:**
+
+- WiFi SSID detection and home network verification
+- WireGuard VPN status checking
+- VPN connection enumeration via scutil
+- Network interface inspection for VPN tunnels
+
+**Usage:**
+
+```bash
+bash system/test-connection.sh
+```
+
+**Shows:**
+
+- Current WiFi network name and home network status
+- Active WireGuard interfaces and configuration
+- All configured VPN connections
+- VPN tunnel interfaces (utun, wg)
+
 ## 🤖 Application Scripts
 
 ### `applications/freqtrade-install.sh`
+
 Installs and configures Freqtrade cryptocurrency trading bot with Docker.
 
 **Features:**
+
 - Docker Compose setup
 - Freqtrade configuration (dry-run mode)
 - Web UI on port 8080
@@ -164,11 +271,13 @@ Installs and configures Freqtrade cryptocurrency trading bot with Docker.
 - Secure credential generation
 
 **Usage:**
+
 ```bash
 bash applications/freqtrade-install.sh
 ```
 
 **Helper Scripts Created:**
+
 - `~/freqtrade/ft-status.sh` - Check container status and logs
 - `~/freqtrade/ft-logs.sh` - Follow live logs
 - `~/freqtrade/ft-download-data.sh` - Download market data
@@ -178,14 +287,17 @@ bash applications/freqtrade-install.sh
 ## 🚀 Launchers
 
 ### `launchers/macbook-freqtrade-server-init.sh`
+
 Orchestrates the complete setup process for a MacBook Freqtrade server.
 
 **Usage:**
+
 ```bash
 bash launchers/macbook-freqtrade-server-init.sh
 ```
 
 This launcher will:
+
 1. Explain the setup process
 2. Optionally run both system and application scripts in sequence
 3. Provide guidance for manual execution
@@ -194,11 +306,14 @@ This launcher will:
 
 1. **Clone/Download** this repository to your target machine
 2. **Run the launcher** for a complete setup:
+
    ```bash
    cd homelab-scripts
    bash launchers/macbook-freqtrade-server-init.sh
    ```
+
 3. **Or run components separately:**
+
    ```bash
    # System setup (run once)
    bash system/macbook-server-setup.sh
@@ -208,6 +323,7 @@ This launcher will:
    ```
 
 4. **Additional utilities available:**
+
    ```bash
    # User management
    sudo bash system/add-user.sh newuser
@@ -218,6 +334,13 @@ This launcher will:
    
    # System information
    bash system/system-info.sh
+   
+   # Server monitoring (start background daemon)
+   ./system/serverwatch start 192.168.1.100
+   ./system/serverwatch status
+   
+   # Connection testing
+   bash system/test-connection.sh
    
    # Safe shutdown (prevents auto-reboot)
    bash system/manual-shutdown.sh
@@ -248,19 +371,22 @@ This launcher will:
 ## 🎯 Default Configuration
 
 ### SSH
+
 - **Port:** 2222 (22 remains open during transition)
 - **Root Login:** Disabled
 - **Max Auth Tries:** 3
 
 ### Firewall
+
 - **SSH:** Ports 22, 2222
 - **Freqtrade UI:** Port 8080
 - **Default:** Deny incoming, allow outgoing
 
 ### Freqtrade
+
 - **Mode:** Dry-run (paper trading)
 - **Exchange:** Binance (requires API keys)
-- **UI:** http://your-ip:8080
+- **UI:** <http://your-ip:8080>
 - **Pairs:** BTC/USDT, ETH/USDT
 
 ## 📚 Additional Resources
