@@ -1,6 +1,7 @@
 # Launcher Scripts
 
-This directory contains orchestration scripts that combine multiple components and guide users through complex setup processes.
+This directory contains orchestration scripts that combine multiple components and guide users through
+complex setup processes.
 
 ## 📁 Launchers Overview
 
@@ -13,11 +14,13 @@ launchers/
 
 ### `macbook-freqtrade-server-init.sh`
 
-**Purpose:** Comprehensive orchestration script that guides users through the complete setup process for transforming a MacBook Pro 2011 into a dedicated Freqtrade trading server.
+**Purpose:** Comprehensive orchestration script that guides users through the complete setup process
+for transforming a MacBook Pro 2011 into a dedicated Freqtrade trading server.
 
 **What This Launcher Does:**
 
-This script serves as a "setup wizard" that coordinates the execution of multiple system and application scripts in the correct order, providing guidance and explanations at each step.
+This script serves as a "setup wizard" that coordinates the execution of multiple system and application
+scripts in the correct order, providing guidance and explanations at each step.
 
 **Key Features:**
 
@@ -404,7 +407,8 @@ Before running the launcher, ensure:
 
 ## 🎯 Design Philosophy
 
-This launcher follows the principle of "progressive disclosure" - presenting information and options when needed without overwhelming the user. It's designed to:
+This launcher follows the principle of "progressive disclosure" - presenting information and options
+when needed without overwhelming the user. It's designed to:
 
 - **Guide newcomers** through the complex setup process
 - **Speed up experienced users** with automatic modes
@@ -412,4 +416,5 @@ This launcher follows the principle of "progressive disclosure" - presenting inf
 - **Handle errors gracefully** with recovery options
 - **Document everything** for learning and troubleshooting
 
-The goal is to transform a complex multi-script setup into a single, user-friendly experience while maintaining the modularity and flexibility of the individual components.
+The goal is to transform a complex multi-script setup into a single, user-friendly experience while
+maintaining the modularity and flexibility of the individual components.
